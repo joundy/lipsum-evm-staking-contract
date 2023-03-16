@@ -2,7 +2,7 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-describe.only("Staking Rewards", function () {
+describe("Staking Rewards", function () {
   async function deployStakingRewards() {
     const [owner, otherAccount] = await ethers.getSigners();
 
@@ -70,33 +70,28 @@ describe.only("Staking Rewards", function () {
       const otherAccountBalance = await myToken
         .connect(otherAccount)
         .balanceOf(otherAccount.address);
-      expect(otherAccountBalance.toString()).is.equal(
-        ethers.BigNumber.from(ethers.utils.parseUnits("10000")).sub(
-          ethers.BigNumber.from(ethers.utils.parseUnits("1000"))
-        )
-      );
+      expect(otherAccountBalance).is.equal("9000000000000000000000");
 
       await time.increase(3600 * 24 * 7); // after 7days
 
       const otherAccountEarned = await stakingRewards.earned(
         otherAccount.address
       );
-      console.log({
-        otherAccountEarned: ethers.utils.formatEther(otherAccountEarned),
-      });
 
-      // claim the reward and withdraw 
+      const expectOtherAccountEarned = "999996693121693121600000"; // compesate 2 blocktime in seconds when the owner notifity reward to the contract and the user stake
+      expect(otherAccountEarned).is.equal(expectOtherAccountEarned);
+
+      // claim the reward and withdraw
       // check balance after claim the reward
       await stakingRewards.connect(otherAccount).exit();
       const otherAccountBalanceAfterClaimReward = await myToken
         .connect(otherAccount)
         .balanceOf(otherAccount.address);
 
-      console.log({
-        otherAccountBalanceAfterClaimReward: ethers.utils.formatEther(
-          otherAccountBalanceAfterClaimReward
-        ),
-      });
+      const finalOtherAccountBalance = "1009996693121693121600000"; // initial account + staking reward
+      expect(otherAccountBalanceAfterClaimReward).is.equal(
+        finalOtherAccountBalance
+      );
     });
   });
 });
